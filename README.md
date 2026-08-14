@@ -46,4 +46,10 @@ Please cite the archived v1.0 preprint using:
 
 ## License
 
-The archived preprint is distributed under the Creative Commons Attribution 4.0 International (CC BY 4.0) license; see the Zenodo record for the canonical licensing metadata.
+The preprint and its LaTeX source are licensed under the
+[Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+
+See [`LICENSE`](./LICENSE) for the full license text.
+
+The canonical archival record is available on Zenodo:
+https://doi.org/10.5281/zenodo.21939762
