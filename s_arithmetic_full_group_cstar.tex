@@ -1,0 +1,601 @@
+\documentclass[11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{microtype}
+\usepackage[a4paper,margin=1.08in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+  pdftitle={Infinite Projections in Full Group C*-Algebras of S-Arithmetic Groups},
+  pdfauthor={Tseng},
+  pdfsubject={Kazhdan projections, subgroup compression, and S-arithmetic groups}
+}
+\hyphenation{Kazhdan Proposition arithmetic}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\C}{\mathbb C}
+\newcommand{\F}{\mathbb F}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\R}{\mathbb R}
+\newcommand{\Z}{\mathbb Z}
+\newcommand{\Hh}{\mathcal H}
+\newcommand{\Td}{\mathcal T}
+\newcommand{\OK}{\mathcal O_K}
+\newcommand{\OS}{\mathcal O_{K,\Sigma}}
+\newcommand{\SL}{\operatorname{SL}}
+\newcommand{\Cmax}[1]{C^*_{\max}(#1)}
+\newcommand{\Cr}[1]{C^*_r(#1)}
+\newcommand{\Cfd}[1]{C^*_{\mathrm{fd}}(#1)}
+
+\title{Infinite Projections in Full Group $C^*$-Algebras\\
+of $S$-Arithmetic Groups}
+\author{Tseng}
+\date{August 14, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Let $K$ be a number field, let $\Sigma$ be a nonempty finite set of nonzero
+prime ideals of $\OK$, and let $n\geq4$.  We prove that
+\[
+ \Cmax{\SL_n(\mathcal O_{K,\Sigma})}
+\]
+contains an infinite projection and a proper isometry.  Hence it is not
+finite and is neither stably finite nor MF, although
+$\SL_n(\mathcal O_{K,\Sigma})$ is a finitely presented, residually finite
+property-$(T)$ group.  In particular this applies to
+$\SL_n(\Z[S^{-1}])$ for every nonempty finite set $S$ of rational primes.
+More generally, if a countable discrete group $G$ contains a property-$(T)$
+subgroup $\Gamma$ and some $t\in G$ satisfies
+$t\Gamma t^{-1}\subsetneq\Gamma$, then the Kazhdan projection $p_\Gamma$
+is infinite in $\Cmax G$; explicitly,
+$u_{t^{-1}}p_\Gamma+(1-p_\Gamma)$ is a proper isometry.  To the best of our
+knowledge, these are the first examples of countable discrete groups with a
+non-finite---and hence non-MF---full group $C^*$-algebra.  The preparation of
+this manuscript was AI-assisted.
+\end{abstract}
+
+\section{Introduction}
+
+All groups in this paper are countable and discrete.  The faithful canonical
+trace makes the reduced group algebra $\Cr G$ stably finite for every group
+$G$.  By contrast, it was not known whether every full group $C^*$-algebra of
+a discrete group must be finite.
+
+A projection in a $C^*$-algebra is \emph{infinite} if it is
+Murray--von Neumann equivalent to a proper subprojection of itself.  A unital
+$C^*$-algebra is finite precisely when every isometry is unitary, and it is
+stably finite if every matrix algebra over it is finite.  Choi asked whether
+$C^*(G)$ can fail to be quasi-directly finite for a discrete group $G$
+\cite[Question~1]{ChoiQDF}.  In the unital setting this asks whether $C^*(G)$
+can contain a proper isometry.  Milh\o j and R\o rdam later recorded the
+equivalent question whether a full group $C^*$-algebra can contain an infinite
+projection \cite[Section~6]{MilhojRordam}.  The qualification ``discrete'' is
+essential: nondiscrete locally compact examples failing quasi-direct finiteness
+were already known \cite[Section~3]{ChoiQDF}.
+
+An MF $C^*$-algebra embeds into a norm ultraproduct of matrix algebras and is
+stably finite.  In March 2026, Shulman noted that no group was known whose
+full or reduced group $C^*$-algebra is non-MF, and that stable finiteness of
+full group algebras was not known in general \cite[Introduction]{Shulman}.
+
+Our main examples are the standard higher-rank $S$-arithmetic groups.
+
+\begin{theorem}[$S$-arithmetic groups]\label{thm:sarithmetic}
+Let $K$ be a number field, let $\Sigma$ be a nonempty finite set of nonzero
+prime ideals of $\OK$, and let $\OS$ be the ring of elements of $K$ integral
+outside $\Sigma$.  For every $n\geq4$, the group
+\[
+ G=\SL_n(\OS),
+\]
+viewed as a discrete group, is finitely presented, linear, residually finite,
+and has property $(T)$, while $\Cmax G$ contains a proper isometry and an
+infinite projection.  Consequently, $\Cmax G$ is not finite and is neither
+stably finite nor MF.
+\end{theorem}
+
+For $K=\Q$, write $\Z[S^{-1}]=\Z[p^{-1}:p\in S]$.  The subgroup and
+compressor behind Theorem~\ref{thm:sarithmetic} are especially transparent:
+for $p\in S$, put
+\[
+ \Gamma=
+ \left\{
+ \begin{pmatrix}A&x\\0&1\end{pmatrix}:
+ A\in\SL_{n-1}(\Z),\ x\in\Z^{n-1}
+ \right\},
+ \qquad
+ t=\operatorname{diag}(p,\ldots,p,p^{-(n-1)}).
+\]
+Then $\Gamma\cong\Z^{n-1}\rtimes\SL_{n-1}(\Z)$ has property $(T)$ and
+\[
+ t\Gamma t^{-1}
+ =p^n\Z^{n-1}\rtimes\SL_{n-1}(\Z)
+ \subsetneq\Gamma.
+\]
+
+The arithmetic theorem is an instance of the following general mechanism.
+
+\begin{theorem}[Kazhdan compression criterion]\label{thm:criterion}
+Let $G$ contain a property-$(T)$ subgroup $\Gamma$.  If some $t\in G$
+satisfies
+\[
+ t\Gamma t^{-1}\subsetneq\Gamma,
+\]
+then the Kazhdan projection $p_\Gamma$ is infinite in $\Cmax G$, and
+$\Cmax G$ contains a proper isometry.  Consequently, $\Cmax G$ is not
+finite and hence is neither stably finite nor MF.
+\end{theorem}
+
+The mechanism is elementary.  In every representation, the Kazhdan
+projection $p=p_\Gamma$ projects onto the $\Gamma$-fixed vectors.  The
+subgroup inclusion implies
+\[
+ p u_{t^{-1}}p=u_{t^{-1}}p.
+\]
+Thus $v=u_{t^{-1}}p$ is an isometry in the corner $p\Cmax Gp$, with
+\[
+ v^*v=p,
+ \qquad
+ vv^*=u_{t^{-1}}pu_t\leq p.
+\]
+The quasi-regular representation on $\ell^2(G/\Gamma)$ detects that the last
+inequality is strict.  Hence $p$ is infinite, and $v+(1-p)$ is a proper
+isometry with initial projection $1$.
+
+Every residually finite group is MF as a group
+\cite[Proposition~2.13]{CarrionDadarlatEckhardt}.  Theorem
+\ref{thm:sarithmetic} therefore shows, even among finitely presented
+residually finite Kazhdan groups, that the converse to
+\[
+ \Cmax G\text{ is MF}\quad\Longrightarrow\quad G\text{ is MF}
+\]
+fails.
+
+Wassermann used Kazhdan projections in full group $C^*$-algebras for
+extension-theoretic obstructions \cite{Wassermann}.  Bekka obtained
+finite-dimensional and tracial rigidity results for full group algebras of
+arithmetic groups \cite{Bekka,BekkaSuper}; these do not imply failure of
+finiteness.
+One-sided subgroup compression also produces isometries in Hecke
+$C^*$-algebras and semigroup crossed products \cite{LacaLarsen}.  Those
+isometries live in Hecke completions rather than in the full group $C^*$-algebra
+of the ambient discrete group.  Here property $(T)$ supplies the universal
+fixed-vector projection inside the maximal group $C^*$-algebra itself.
+
+Section~\ref{sec:compression} proves the criterion and locates its defect
+projection.  Section~\ref{sec:arithmetic} proves the arithmetic theorem.
+Section~\ref{sec:completion} records the resulting separation of maximal,
+finite-dimensional, and reduced completions.
+
+\section{The compression argument}\label{sec:compression}
+
+We first recall two standard facts in the form needed below.
+
+\begin{lemma}[Maximal subgroup inclusion]\label{lem:inclusion}
+If $H<G$, the canonical map $\C[H]\to\C[G]$ extends to an injective
+$*$-homomorphism
+\[
+ \Cmax H\longrightarrow\Cmax G.
+\]
+\end{lemma}
+
+\begin{proof}
+Restriction of representations gives $\|x\|_{\Cmax G}\leq
+\|x\|_{\Cmax H}$ for $x\in\C[H]$.  Conversely, if $\pi$ is a unitary
+representation of $H$, then the restriction to $H$ of
+$\operatorname{Ind}_H^G\pi$ contains $\pi$ on the fibre over $H\in G/H$.
+Hence
+\[
+ \|\pi(x)\|\leq\|\operatorname{Ind}_H^G\pi(x)\|
+ \leq\|x\|_{\Cmax G}.
+\]
+Taking the supremum over $\pi$ proves the claim.
+\end{proof}
+
+\begin{proposition}[The Kazhdan projection]\label{prop:kazhdan}
+If $\Gamma$ has property $(T)$, there is a central projection
+$p_\Gamma\in\Cmax\Gamma$ such that, in every unitary representation $\pi$
+of $\Gamma$, $\pi(p_\Gamma)$ is the orthogonal projection onto
+$\Hh^\Gamma$.
+
+More precisely, let $S\subset\Gamma$ be a nonempty finite symmetric
+Kazhdan set with Kazhdan constant $0<\kappa\leq2$, and put
+\[
+ M=\frac1{|S|}\sum_{s\in S}u_s,
+ \qquad
+ L=\frac{1+M}{2},
+ \qquad
+ r=1-\frac{\kappa^2}{4|S|}<1.
+\]
+Then $L^j\to p_\Gamma$ in maximal norm and
+\[
+ \|L^j-p_\Gamma\|\leq r^j.
+\]
+\end{proposition}
+
+\begin{proof}
+Since $S$ is symmetric, $M=M^*$ and $\|M\|\leq1$, so $L$ is a positive
+contraction.  If $\xi\perp\Hh^\Gamma$, then
+\[
+ \|\xi\|^2-\langle\pi(M)\xi,\xi\rangle
+ =\frac1{2|S|}\sum_{s\in S}\|\pi(s)\xi-\xi\|^2
+ \geq\frac{\kappa^2}{2|S|}\|\xi\|^2.
+\]
+Thus $\pi(L)$ is the identity on $\Hh^\Gamma$ and has norm at most $r$
+on its orthogonal complement, uniformly over all representations.  It follows
+that $L^j$ converges in $\Cmax\Gamma$ with the stated estimate, and its
+limit has the required universal property.  The invariant-vector projection
+commutes with $\pi(\Gamma)$ in every representation, so the limit is central.
+See also \cite{DrutuNowak}.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:criterion}]
+By Lemma~\ref{lem:inclusion}, regard $p=p_\Gamma$ as an element of
+$A=\Cmax G$.  Put
+\[
+ v=u_{t^{-1}}p,
+ \qquad
+ q=u_{t^{-1}}pu_t.
+\]
+Let $U$ be any unitary representation of $G$, and let $P=U(p)$ be the
+projection onto $\Hh^\Gamma$.  For $\xi\in\Hh^\Gamma$ and
+$\gamma\in\Gamma$,
+\[
+ U_\gamma U_{t^{-1}}\xi
+ =U_{t^{-1}}U_{t\gamma t^{-1}}\xi
+ =U_{t^{-1}}\xi.
+\]
+Hence $U_{t^{-1}}\Hh^\Gamma\subseteq\Hh^\Gamma$, so
+\[
+ P U_{t^{-1}}P=U_{t^{-1}}P.
+\]
+Since this holds in every representation,
+\[
+ p u_{t^{-1}}p=u_{t^{-1}}p=v.
+\]
+Therefore $v\in pAp$ and
+\[
+ v^*v=p,
+ \qquad
+ vv^*=q\leq p.
+\]
+
+To prove strictness, consider the quasi-regular representation
+\[
+ \rho:G\curvearrowright\ell^2(G/\Gamma).
+\]
+The ranges of $\rho(p)$ and $\rho(q)$ are the $\Gamma$-fixed and
+$(t^{-1}\Gamma t)$-fixed subspaces, respectively.  Since
+$\Gamma\subsetneq t^{-1}\Gamma t$, choose
+$h\in t^{-1}\Gamma t\setminus\Gamma$.  The vector $\delta_\Gamma$ is
+$\Gamma$-fixed, whereas
+\[
+ \rho(h)\delta_\Gamma=\delta_{h\Gamma}\neq\delta_\Gamma.
+\]
+Thus $\rho(q)\neq\rho(p)$, and consequently $q<p$ in $A$.  This proves
+that $p$ is infinite.  Finally, with
+\[
+ d=p-q,
+ \qquad
+ w=v+(1-p),
+\]
+the cross terms vanish and
+\[
+ w^*w=1,
+ \qquad
+ ww^*=1-d<1.
+\]
+Hence $w$ is a proper isometry.  An MF $C^*$-algebra is stably finite
+\cite{BlackadarKirchberg}, so $A$ is not MF.
+\end{proof}
+
+The proof uses property $(T)$ only to obtain a projection whose image in
+every representation of $G$ is the projection onto the $\Gamma$-fixed
+vectors.  Whenever such a projection exists, the same argument applies.
+
+The identities above also determine exactly where the defect $d=p-q$ is
+visible.
+
+\begin{proposition}[The compression defect]\label{prop:defect}
+Under the hypotheses of Theorem~\ref{thm:criterion}, let $p,v,q,d$ be as
+in its proof.
+\begin{enumerate}
+\item Every $*$-homomorphism from $\Cmax G$ to a finite unital
+$C^*$-algebra annihilates $d$.  Hence every finite-dimensional
+representation and every tracial GNS representation annihilates the closed
+ideal generated by $d$.  In particular, $\Cmax G$ is not residually
+finite-dimensional and has no faithful tracial state.
+\item The elements $p,v,q,d$ lie in the kernel $I$ of
+$\Cmax G\to\Cr G$.  The projection $p$ is infinite but not properly
+infinite, and the $C^*$-algebra generated by $v$ in the corner with unit
+$p$ is isomorphic to the Toeplitz algebra $\Td$, with defect projection
+$d=p-vv^*$.
+\item The quasi-regular representation $\lambda_{G/\Gamma}$ does not
+annihilate $d$.  Consequently, the completion associated with
+$\lambda_G\oplus\lambda_{G/\Gamma}$ is strictly larger than the reduced
+completion, although it may coincide with the maximal completion.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Let $\Phi:\Cmax G\to B$, with $B$ finite and unital.  Passing to the
+finite corner $\Phi(1)B\Phi(1)$, assume that $\Phi$ is unital.  The partial
+isometry $\Phi(v)$ implements
+\[
+ \Phi(p)\sim\Phi(q)\leq\Phi(p).
+\]
+Finiteness forces $\Phi(p)=\Phi(q)$, so $\Phi(d)=0$.  This covers
+finite-dimensional representations.  For a tracial state $\tau$ one also
+has $\tau(d)=\tau(v^*v)-\tau(vv^*)=0$; since $d$ is a projection, its
+image in the GNS representation is zero.  As $d\neq0$, the asserted
+failures of residual finite dimensionality and faithful traciality follow.
+
+Strict compression forces $\Gamma$ to be infinite.  The restriction of the
+left regular representation of $G$ to $\Gamma$ has no invariant vector, and
+hence annihilates $p$.  Thus $p,v,q,d\in I$.  The relation $v^*v=p$ and
+the strict inequality $vv^*<p$ make $p$ infinite.  The augmentation
+character sends $p$ to $1$, so $p$ is not properly infinite.  Coburn's
+theorem \cite{Coburn} identifies the algebra generated by the nonunitary
+isometry $v$ in $p\Cmax Gp$ with $\Td$.
+
+Finally, the proof of Theorem~\ref{thm:criterion} shows that
+$\lambda_{G/\Gamma}(d)\neq0$, proving the last assertion.
+\end{proof}
+
+\section{\texorpdfstring{$S$}{S}-arithmetic groups}\label{sec:arithmetic}
+
+\begin{proof}[Proof of Theorem~\ref{thm:sarithmetic}]
+Set $m=n-1$.  Choose $\mathfrak p\in\Sigma$.  Since the ideal class group
+of $K$ is finite, there are $h\geq1$ and $\alpha\in\OK$ such that
+\[
+ \mathfrak p^h=(\alpha).
+\]
+Thus $\alpha$ is a nonunit of $\OK$ and, since $(\alpha)=\mathfrak p^h$
+is supported in $\Sigma$, a unit of $\OS$.
+
+Inside $G=\SL_n(\OS)$ consider
+\[
+ \Gamma=
+ \left\{
+ \begin{pmatrix}A&x\\0&1\end{pmatrix}:
+ A\in\SL_m(\OK),\ x\in\OK^m
+ \right\}
+ \cong \OK^m\rtimes\SL_m(\OK).
+\]
+By Borel--Harish-Chandra, applied after restriction of scalars from $K$ to
+$\Q$, the diagonal archimedean embedding realizes $\Gamma$ as a lattice in
+\[
+ \prod_{v\mid\infty}
+ \bigl(K_v^m\rtimes\SL_m(K_v)\bigr).
+\]
+See \cite{BorelHarishChandra}.
+Each factor has property $(T)$ for $m\geq3$
+\cite[Corollary~1.4.16]{BHV}, and property $(T)$ passes to lattices
+\cite[Theorem~1.7.1]{BHV}.  Hence $\Gamma$ has property $(T)$.
+
+Put
+\[
+ t=\operatorname{diag}(\alpha I_m,\alpha^{-m})\in G.
+\]
+For $A\in\SL_m(\OK)$ and $x\in\OK^m$, direct multiplication gives
+\[
+ t\begin{pmatrix}A&x\\0&1\end{pmatrix}t^{-1}
+ =\begin{pmatrix}A&\alpha^{m+1}x\\0&1\end{pmatrix}
+ =\begin{pmatrix}A&\alpha^n x\\0&1\end{pmatrix}.
+\]
+Consequently,
+\[
+ t\Gamma t^{-1}
+ =\alpha^n\OK^m\rtimes\SL_m(\OK)
+ \subsetneq\Gamma,
+\]
+where strictness follows because $\alpha$ is a nonunit.  Theorem
+\ref{thm:criterion} gives the proper isometry and infinite projection.
+
+For completeness, the remaining group-theoretic properties are standard.
+The standard $S$-arithmetic lattice theorem realizes $G$ diagonally as a
+lattice in
+\[
+ \prod_{v\mid\infty}\SL_n(K_v)
+ \times\prod_{\mathfrak q\in\Sigma}\SL_n(K_{\mathfrak q})
+\]
+\cite{BorelSerre}.  The local-field theorem for $\SL_n$ and
+lattice inheritance give property $(T)$
+\cite[Theorems~1.4.15 and~1.7.1]{BHV}.  The finiteness theorem of
+Borel--Serre gives finite presentability \cite{BorelSerre}, and linearity is
+immediate.
+
+To see residual finiteness directly, let $g\neq1$ and choose a nonzero entry
+$x\in\OS$ of $g-I_n$.  A nonzero element of the Dedekind domain $\OS$ lies
+in only finitely many maximal ideals, so one can choose a nonzero prime ideal
+$\mathfrak q\notin\Sigma$ with $x\notin\mathfrak q\OS$.  Reduction modulo
+$\mathfrak q$ maps $G$ to the finite group $\SL_n(\OK/\mathfrak q)$ and
+does not kill $g-I_n$.
+\end{proof}
+
+In the rational case the class-group step disappears.  If $p\in S$, then
+$\alpha=p$ and the displayed calculation reads
+\[
+ \operatorname{diag}(pI_{n-1},p^{-(n-1)})
+ \begin{pmatrix}A&x\\0&1\end{pmatrix}
+ \operatorname{diag}(p^{-1}I_{n-1},p^{n-1})
+ =\begin{pmatrix}A&p^n x\\0&1\end{pmatrix}.
+\]
+The affine property-$(T)$ group and its finite-index self-compressions also
+appear in \cite[Proposition~1.1]{deCornulier}.
+
+\section{Finite-dimensional approximation}\label{sec:completion}
+
+For a group $G$ and $x\in\C[G]$, set
+\[
+ \|x\|_{\mathrm{fd}}
+ =\sup\{\|\pi(x)\|:\pi\text{ is a finite-dimensional unitary
+ representation of }G\}.
+\]
+Finite-dimensional exotic group completions have been studied previously;
+see \cite{Wiersma,RuanWiersma}.  The compression defect makes both quotient
+kernels below explicit.
+
+\begin{proposition}\label{prop:completion}
+Let $G$ be residually finite and satisfy Theorem~\ref{thm:criterion}.  Then
+\[
+ \|x\|_r\leq\|x\|_{\mathrm{fd}}\leq\|x\|_{\max}
+ \qquad(x\in\C[G]),
+\]
+and $\|\cdot\|_{\mathrm{fd}}$ is a $C^*$-norm on $\C[G]$.  Its completion
+$\Cfd G$ is residually finite-dimensional and stably finite.  Both canonical
+quotients
+\[
+ \Cmax G\longrightarrow\Cfd G\longrightarrow\Cr G
+\]
+are proper: the first kernel contains
+\[
+ d=p_\Gamma-u_{t^{-1}}p_\Gamma u_t,
+\]
+and the second kernel contains the image of $p_\Gamma$.
+\end{proposition}
+
+\begin{proof}
+Let $0\neq x=\sum_{g\in F}a_gu_g\in\C[G]$ with $F$ finite.  Residual
+finiteness gives a finite quotient of $G$ that is injective on $F$.  The
+image of $x$ in the group algebra of this quotient is nonzero, and the
+regular representation of the quotient is faithful.  Thus
+$\|x\|_{\mathrm{fd}}>0$.
+
+To compare with the reduced norm, let $\xi\in\ell^2(G)$ be finitely
+supported.  There is a finite quotient $\theta:G\to Q$ that is injective on
+\[
+ F\cup\operatorname{supp}(\xi)\cup F\operatorname{supp}(\xi).
+\]
+Transporting $\xi$ to $\ell^2(Q)$ then preserves both its norm and the norm
+of its image under $x$.  Taking the supremum over such $\xi$ gives
+$\|x\|_r\leq\|x\|_{\mathrm{fd}}$.
+
+The product of all finite-dimensional representations realizes $\Cfd G$ as
+a $C^*$-subalgebra of a product of matrix algebras, so it is residually
+finite-dimensional and stably finite.  Proposition~\ref{prop:defect} gives
+$0\neq d\in\ker(\Cmax G\to\Cfd G)$.  The image of $p_\Gamma$ in
+$\Cfd G$ is nonzero because the augmentation character sends it to $1$,
+whereas its image in $\Cr G$ is zero.  Hence the second quotient is proper.
+\end{proof}
+
+Thus every group in Theorem~\ref{thm:sarithmetic} has a canonical
+residually finite-dimensional, stably finite exotic completion strictly
+between its maximal and reduced group algebras.
+
+The construction of Proposition~\ref{prop:kazhdan} also gives finite-support
+witnesses for the norm loss.  Namely,
+\[
+ a_j=L^j-u_{t^{-1}}L^ju_t\in\C[G]
+\]
+satisfies
+\[
+ \|a_j-d\|_{\max}\leq2r^j,
+ \qquad
+ \|a_j\|_{\mathrm{fd}}\leq2r^j,
+ \qquad
+ \|\lambda_{G/\Gamma}(a_j)\|\geq1-2r^j.
+\]
+
+\begin{thebibliography}{99}
+
+\bibitem{Bekka}
+M.~B. Bekka,
+\emph{On the full $C^*$-algebras of arithmetic groups and the congruence
+subgroup problem},
+Forum Math. \textbf{11} (1999), no.~6, 705--715.
+
+\bibitem{BekkaSuper}
+M.~B. Bekka,
+\emph{Operator-algebraic superrigidity for $\mathrm{SL}_n(\mathbb Z)$,
+$n\geq3$},
+Invent. Math. \textbf{169} (2007), no.~2, 401--425.
+
+\bibitem{BHV}
+B.~Bekka, P.~de la Harpe, and A.~Valette,
+\emph{Kazhdan's Property $(T)$},
+New Mathematical Monographs, vol.~11, Cambridge University Press,
+Cambridge, 2008.
+
+\bibitem{BlackadarKirchberg}
+B.~Blackadar and E.~Kirchberg,
+\emph{Generalized inductive limits of finite-dimensional $C^*$-algebras},
+Math. Ann. \textbf{307} (1997), no.~3, 343--380.
+
+\bibitem{BorelHarishChandra}
+A.~Borel and Harish-Chandra,
+\emph{Arithmetic subgroups of algebraic groups},
+Ann. of Math. (2) \textbf{75} (1962), 485--535.
+
+\bibitem{BorelSerre}
+A.~Borel and J.-P.~Serre,
+\emph{Cohomologie d'immeubles et de groupes $S$-arithm\'etiques},
+Topology \textbf{15} (1976), no.~3, 211--232.
+
+\bibitem{CarrionDadarlatEckhardt}
+J.~R. Carri\'on, M.~Dadarlat, and C.~Eckhardt,
+\emph{On groups with quasidiagonal $C^*$-algebras},
+J. Funct. Anal. \textbf{265} (2013), no.~1, 135--152.
+
+\bibitem{ChoiQDF}
+Y.~Choi,
+\emph{A note on some group $C^*$-algebras which are quasi-directly finite},
+arXiv:1003.1650v2 (2010).
+
+\bibitem{Coburn}
+L.~A. Coburn,
+\emph{The $C^*$-algebra generated by an isometry},
+Bull. Amer. Math. Soc. \textbf{73} (1967), 722--726.
+
+\bibitem{deCornulier}
+Y.~de Cornulier,
+\emph{Finitely presentable, non-Hopfian groups with Kazhdan's property
+$(T)$ and infinite outer automorphism group},
+Proc. Amer. Math. Soc. \textbf{135} (2007), no.~4, 951--959.
+
+\bibitem{DrutuNowak}
+C.~Dru\c tu and P.~W. Nowak,
+\emph{Kazhdan projections, random walks and ergodic theorems},
+J. Reine Angew. Math. \textbf{754} (2019), 49--86.
+
+\bibitem{LacaLarsen}
+M.~Laca and N.~S. Larsen,
+\emph{Hecke algebras of semidirect products},
+Proc. Amer. Math. Soc. \textbf{131} (2003), no.~7, 2189--2199;
+erratum, \textbf{133} (2005), no.~4, 1255--1256.
+
+\bibitem{MilhojRordam}
+H.~O. Milh\o j and M.~R\o rdam,
+\emph{Around traces and quasitraces},
+accepted for M\"unster J. Math.; arXiv:2309.17412v2.
+
+\bibitem{RuanWiersma}
+Z.-J. Ruan and M.~Wiersma,
+\emph{On exotic group $C^*$-algebras},
+J. Funct. Anal. \textbf{271} (2016), no.~2, 437--453.
+
+\bibitem{Shulman}
+T.~Shulman,
+\emph{The MF property for amalgamated free products},
+arXiv:2603.13564v2 (2026).
+
+\bibitem{Wassermann}
+S.~Wassermann,
+\emph{$C^*$-algebras associated with groups with Kazhdan's property $T$},
+Ann. of Math. (2) \textbf{134} (1991), no.~2, 423--431.
+
+\bibitem{Wiersma}
+M.~Wiersma,
+\emph{Constructions of exotic group $C^*$-algebras},
+Illinois J. Math. \textbf{60} (2016), no.~3, 655--667.
+
+\end{thebibliography}
+
+\end{document}
