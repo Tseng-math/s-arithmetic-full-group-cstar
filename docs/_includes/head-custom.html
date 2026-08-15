@@ -3,87 +3,95 @@
   "use strict";
 
   /*
-   * Compatibility shim for old Markdown files written with
+   * Compatibility layer for old LaTeX-style Markdown:
    *
    *   \( ... \)
    *   \[ ... \]
    *
-   * kramdown may consume the backslashes of those delimiters before
-   * MathJax gets to see the page, leaving:
+   * Jekyll/kramdown may:
    *
-   *   ( ... )
-   *   [ ... ]
+   *   1. remove the '\' from \( \) and \[ \]
+   *   2. interpret TeX underscores as Markdown emphasis:
    *
-   * This script heuristically restores those delimiters immediately
-   * before MathJax performs its first typesetting pass.
+   *        \mathrm{SL}_n(\mathcal O_{K,\Sigma})
+   *
+   *      may become DOM roughly like
+   *
+   *        \mathrm{SL}<em>n(\mathcal O</em>{K,\Sigma})
+   *
+   * We reconstruct those pieces BEFORE MathJax starts.
    */
 
-  function isEscaped(text, index) {
-    let n = 0;
 
-    for (let i = index - 1; i >= 0 && text[i] === "\\"; i--) {
-      n++;
+  /* ------------------------------------------------------------
+   * Helpers
+   * ------------------------------------------------------------ */
+
+  function isEscaped(text, index) {
+    let count = 0;
+
+    for (
+      let i = index - 1;
+      i >= 0 && text[i] === "\\";
+      i--
+    ) {
+      count++;
     }
 
-    return n % 2 === 1;
+    return count % 2 === 1;
   }
 
 
-  /*
-   * Decide whether the contents of (...) look sufficiently like TeX.
-   *
-   * This intentionally recognises single variables such as:
-   *
-   *   (K)
-   *   (S)
-   *   (n)
-   *
-   * because these commonly come from \(K\), \(S\), \(n\).
-   */
+  function hasTexCommand(text) {
+    return /\\[A-Za-z]+/.test(text);
+  }
+
+
   function looksLikeInlineMath(raw) {
     const s = raw.trim();
 
-    if (!s || s.length > 500 || /\n/.test(s)) {
+    if (!s || s.length > 2000 || /\n{2,}/.test(s)) {
       return false;
     }
 
-    /* TeX command: \Sigma, \mathcal, \ge, \mathrm, ... */
-    if (/\\[A-Za-z]+/.test(s)) {
+    /* \Sigma, \mathcal, \mathrm, \ge, ... */
+    if (hasTexCommand(s)) {
       return true;
     }
 
-    /* Subscripts / superscripts. */
+    /* subscripts / superscripts */
     if (/[_^]/.test(s) && /[A-Za-z0-9]/.test(s)) {
       return true;
     }
 
-    /* Mathematical relations. */
-    if (/[=<>≤≥∈∉⊂⊆⊃⊇→↦≈≠]/.test(s)) {
+    /* mathematical relations/operators */
+    if (
+      /[=<>≤≥∈∉⊂⊆⊃⊇→↦≈≠±×÷∞]/.test(s)
+    ) {
       return true;
     }
 
-    /* Single variables: (K), (S), (n), ... */
+    /* single mathematical variables: (K), (S), (n), ... */
     if (/^[A-Za-z]$/.test(s)) {
       return true;
     }
 
-    /* Tuples such as (K,S), (p,q,r). */
-    if (/^[A-Za-z]\s*(?:,\s*[A-Za-z])+$/.test(s)) {
+    /* Greek unicode variables */
+    if (/^[Α-Ωα-ωΓΣΠΔΛΘΩ]+$/.test(s)) {
       return true;
     }
 
-    /* Tiny algebraic expressions such as x+y, C*, p/q. */
-    if (/^[A-Za-z0-9]+\s*[+*/-]\s*[A-Za-z0-9*]+$/.test(s)) {
+    /* tuples: (K,S), (p,q,r) */
+    if (
+      /^[A-Za-z]\s*(?:,\s*[A-Za-z])+$/.test(s)
+    ) {
       return true;
     }
 
-    /*
-     * Function-like expressions, e.g.
-     *
-     *   f(x)
-     *   SL_n(...)
-     */
-    if (/^[A-Za-z][A-Za-z0-9_^{},\\]*\s*\([^\n]*\)$/.test(s)) {
+    /* short algebraic expressions */
+    if (
+      /^[A-Za-z0-9]+\s*[+\-*\/]\s*[A-Za-z0-9*]+$/.test(s)
+    ) {
       return true;
     }
 
@@ -91,26 +99,93 @@
   }
 
 
-  /*
-   * Display mathematics gets a slightly stronger test because [...]
-   * also occurs naturally in ordinary prose.
-   */
   function looksLikeDisplayMath(raw) {
     const s = raw.trim();
 
-    if (!s || s.length > 10000) {
+    if (!s || s.length > 20000) {
       return false;
     }
 
-    if (/\\[A-Za-z]+/.test(s)) {
+    if (hasTexCommand(s)) {
       return true;
     }
 
-    if (/[_^]/.test(s) && /[A-Za-z0-9]/.test(s)) {
+    if (/[_^]/.test(s)) {
       return true;
     }
 
-    if (/[=<>≤≥∈∉⊂⊆⊃⊇→↦≈≠]/.test(s)) {
+    if (
+      /[=<>≤≥∈∉⊂⊆⊃⊇→↦≈≠±×÷∞]/.test(s)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+
+
+  /* ------------------------------------------------------------
+   * Recover underscores swallowed by Markdown emphasis
+   * ------------------------------------------------------------ */
+
+  /*
+   * Decide whether an <em> node is probably caused by TeX
+   * underscores rather than intentional Markdown italics.
+   */
+  function texishEmphasis(em) {
+    const text = em.textContent || "";
+
+    /*
+     * Strongest clue:
+     *
+     *   <em>n(\mathcal O</em>
+     *
+     * contains a TeX command.
+     */
+    if (hasTexCommand(text)) {
+      return true;
+    }
+
+
+    const prev =
+      em.previousSibling
+        ? (em.previousSibling.textContent || "")
+        : "";
+
+    const next =
+      em.nextSibling
+        ? (em.nextSibling.textContent || "")
+        : "";
+
+
+    /*
+     * Nearby TeX command.
+     */
+    const neighborhood =
+      prev.slice(-60) +
+      text +
+      next.slice(0, 60);
+
+    if (hasTexCommand(neighborhood)) {
+      return true;
+    }
+
+
+    /*
+     * Typical fragments created by:
+     *
+     *   _n
+     *   _{K,\Sigma}
+     *   ^*_{\max}
+     */
+    if (
+      /[A-Za-z0-9}\])]\s*$/.test(prev) &&
+      (
+        /^[A-Za-z0-9{\\]/.test(text) ||
+        /^[{(\\]/.test(next)
+      )
+    ) {
       return true;
     }
 
@@ -119,22 +194,223 @@
 
 
   /*
-   * Restore old
+   * Reconstruct a Markdown-ish / TeX-ish string from a DOM block.
    *
-   *   \[ ... \]
-   *
-   * which kramdown has changed into
-   *
-   *   [ ... ]
+   * Important:
+   * TeX-caused <em>...</em> becomes _..._ again.
    */
+  function reconstructText(node, state) {
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.nodeValue || "";
+    }
+
+
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return "";
+    }
+
+
+    const tag =
+      node.tagName.toLowerCase();
+
+
+    if (
+      tag === "script" ||
+      tag === "style" ||
+      tag === "noscript" ||
+      tag === "code" ||
+      tag === "pre" ||
+      tag === "mjx-container"
+    ) {
+      state.unsafe = true;
+      return node.textContent || "";
+    }
+
+
+    if (tag === "br") {
+      return "\n";
+    }
+
+
+    let body = "";
+
+    for (const child of node.childNodes) {
+      body += reconstructText(child, state);
+    }
+
+
+    if (tag === "em" || tag === "i") {
+
+      if (texishEmphasis(node)) {
+        state.recoveredUnderscore = true;
+        return "_" + body + "_";
+      }
+
+      /*
+       * This looks like genuine prose italics.
+       * Don't flatten this paragraph, because we would destroy
+       * intentional formatting.
+       */
+      state.unsafe = true;
+
+      return body;
+    }
+
+
+    if (
+      tag === "strong" ||
+      tag === "b" ||
+      tag === "a" ||
+      tag === "img" ||
+      tag === "button"
+    ) {
+      state.unsafe = true;
+    }
+
+
+    return body;
+  }
+
+
+
+  /* ------------------------------------------------------------
+   * Protect already-valid math
+   * ------------------------------------------------------------ */
+
+  function protectedMathRanges(text) {
+    const ranges = [];
+
+
+    function addDelimited(open, close) {
+      let pos = 0;
+
+      while (pos < text.length) {
+
+        const start =
+          text.indexOf(open, pos);
+
+        if (start < 0) {
+          break;
+        }
+
+
+        const end =
+          text.indexOf(
+            close,
+            start + open.length
+          );
+
+        if (end < 0) {
+          break;
+        }
+
+
+        ranges.push([
+          start,
+          end + close.length
+        ]);
+
+        pos =
+          end + close.length;
+      }
+    }
+
+
+    addDelimited("\\(", "\\)");
+    addDelimited("\\[", "\\]");
+    addDelimited("$$", "$$");
+
+
+    /*
+     * Protect $ ... $
+     */
+    let dollarStart = -1;
+
+    for (
+      let i = 0;
+      i < text.length;
+      i++
+    ) {
+
+      if (
+        text[i] !== "$" ||
+        isEscaped(text, i)
+      ) {
+        continue;
+      }
+
+
+      if (
+        text[i - 1] === "$" ||
+        text[i + 1] === "$"
+      ) {
+        continue;
+      }
+
+
+      const alreadyProtected =
+        ranges.some(
+          r =>
+            i >= r[0] &&
+            i < r[1]
+        );
+
+      if (alreadyProtected) {
+        continue;
+      }
+
+
+      if (dollarStart < 0) {
+        dollarStart = i;
+      } else {
+        ranges.push([
+          dollarStart,
+          i + 1
+        ]);
+
+        dollarStart = -1;
+      }
+    }
+
+
+    return ranges;
+  }
+
+
+  function overlapsProtected(
+    start,
+    end,
+    ranges
+  ) {
+    return ranges.some(
+      r =>
+        start < r[1] &&
+        end + 1 > r[0]
+    );
+  }
+
+
+
+  /* ------------------------------------------------------------
+   * Restore display math: [ ... ] -> \[ ... \]
+   * ------------------------------------------------------------ */
+
   function restoreLegacyDisplay(text) {
 
     /*
-     * Most display formulas occur as the entire text node / paragraph.
+     * Formula occupies the whole paragraph.
      */
-    const whole = text.match(/^(\s*)\[([\s\S]*?)\](\s*)$/);
+    const whole =
+      text.match(
+        /^(\s*)\[([\s\S]*?)\](\s*)$/
+      );
 
-    if (whole && looksLikeDisplayMath(whole[2])) {
+
+    if (
+      whole &&
+      looksLikeDisplayMath(whole[2])
+    ) {
       return (
         whole[1] +
         "\\[" +
@@ -144,24 +420,38 @@
       );
     }
 
+
     /*
-     * Also support a TeX-looking [...] expression embedded in a
-     * larger text node.
+     * Embedded [...] that clearly looks like TeX.
      */
     return text.replace(
-      /\[([^\[\]]{1,4000})\]/g,
-      function (match, inner, offset, source) {
+      /\[([^\[\]]{1,10000})\]/g,
 
-        /*
-         * Do not touch an existing \[ delimiter.
-         */
-        if (offset > 0 && source[offset - 1] === "\\") {
+      function (
+        match,
+        inner,
+        offset,
+        source
+      ) {
+
+        if (
+          offset > 0 &&
+          source[offset - 1] === "\\"
+        ) {
           return match;
         }
 
-        if (looksLikeDisplayMath(inner)) {
-          return "\\[" + inner + "\\]";
+
+        if (
+          looksLikeDisplayMath(inner)
+        ) {
+          return (
+            "\\[" +
+            inner +
+            "\\]"
+          );
         }
+
 
         return match;
       }
@@ -169,131 +459,32 @@
   }
 
 
-  /*
-   * Find regions that are already valid mathematics.
-   *
-   * We must not repair parentheses occurring inside:
-   *
-   *   \( ... \)
-   *   \[ ... \]
-   *   $ ... $
-   *   $$ ... $$
-   */
-  function protectedMathRanges(text) {
-    const ranges = [];
 
-    function addDelimited(open, close) {
-      let pos = 0;
+  /* ------------------------------------------------------------
+   * Restore inline math: (...) -> \( ... \)
+   * ------------------------------------------------------------ */
 
-      while (pos < text.length) {
-        const start = text.indexOf(open, pos);
-
-        if (start < 0) {
-          break;
-        }
-
-        if (isEscaped(text, start)) {
-          pos = start + open.length;
-          continue;
-        }
-
-        const endStart =
-          text.indexOf(close, start + open.length);
-
-        if (endStart < 0) {
-          break;
-        }
-
-        ranges.push([
-          start,
-          endStart + close.length
-        ]);
-
-        pos = endStart + close.length;
-      }
-    }
-
-    addDelimited("\\[", "\\]");
-    addDelimited("\\(", "\\)");
-    addDelimited("$$", "$$");
-
-
-    /*
-     * Protect $...$ as well.
-     */
-    let start = -1;
-
-    for (let i = 0; i < text.length; i++) {
-      if (text[i] !== "$" || isEscaped(text, i)) {
-        continue;
-      }
-
-      /*
-       * $$ belongs to display math and was handled above.
-       */
-      if (
-        (i > 0 && text[i - 1] === "$") ||
-        (i + 1 < text.length && text[i + 1] === "$")
-      ) {
-        continue;
-      }
-
-      /*
-       * Ignore dollars already inside another protected range.
-       */
-      if (
-        ranges.some(
-          r => i >= r[0] && i < r[1]
-        )
-      ) {
-        continue;
-      }
-
-      if (start < 0) {
-        start = i;
-      } else {
-        ranges.push([start, i + 1]);
-        start = -1;
-      }
-    }
-
-    return ranges;
-  }
-
-
-  function overlapsProtected(start, end, ranges) {
-    return ranges.some(
-      r =>
-        start < r[1] &&
-        end + 1 > r[0]
-    );
-  }
-
-
-  /*
-   * Restore
-   *
-   *   \( ... \)
-   *
-   * after kramdown has changed it into
-   *
-   *   ( ... )
-   */
   function restoreLegacyInline(text) {
-    const ranges = protectedMathRanges(text);
+
+    const protectedRanges =
+      protectedMathRanges(text);
 
     const stack = [];
     const pairs = [];
 
+
     /*
-     * Find balanced parentheses.
+     * Collect balanced parentheses.
      */
-    for (let i = 0; i < text.length; i++) {
+    for (
+      let i = 0;
+      i < text.length;
+      i++
+    ) {
+
       const ch = text[i];
 
-      /*
-       * Existing escaped parentheses belong to TeX already.
-       */
+
       if (
         (ch === "(" || ch === ")") &&
         isEscaped(text, i)
@@ -301,13 +492,18 @@
         continue;
       }
 
+
       if (ch === "(") {
+
         stack.push(i);
+
       } else if (
         ch === ")" &&
         stack.length
       ) {
-        const start = stack.pop();
+
+        const start =
+          stack.pop();
 
         pairs.push({
           start: start,
@@ -318,64 +514,67 @@
 
 
     /*
-     * Prefer the outermost math-looking pair.
-     *
-     * Thus
-     *
-     *   (f(x))
-     *
-     * becomes one formula rather than separately converting (x).
+     * Process outer pairs first.
      */
-    pairs.sort(function (a, b) {
-      return (
-        a.start - b.start ||
-        b.end - a.end
-      );
-    });
+    pairs.sort(
+      function (a, b) {
+
+        return (
+          a.start - b.start ||
+          b.end - a.end
+        );
+      }
+    );
 
 
     const chosen = [];
 
-    for (const p of pairs) {
+
+    for (const pair of pairs) {
 
       if (
         overlapsProtected(
-          p.start,
-          p.end,
-          ranges
+          pair.start,
+          pair.end,
+          protectedRanges
         )
       ) {
         continue;
       }
 
+
       /*
-       * Do not choose a nested expression if its outer expression
-       * has already been selected.
+       * If an enclosing formula has already been chosen,
+       * don't independently typeset its inner parentheses.
        */
       if (
         chosen.some(
-          q =>
-            p.start > q.start &&
-            p.end < q.end
+          outer =>
+            pair.start > outer.start &&
+            pair.end < outer.end
         )
       ) {
         continue;
       }
 
+
       const inner =
         text.slice(
-          p.start + 1,
-          p.end
+          pair.start + 1,
+          pair.end
         );
 
-      if (looksLikeInlineMath(inner)) {
-        chosen.push(p);
+
+      if (
+        looksLikeInlineMath(inner)
+      ) {
+        chosen.push(pair);
       }
     }
 
 
     /*
-     * Replace from right to left so string indices remain valid.
+     * Right-to-left replacement keeps offsets valid.
      */
     chosen.sort(
       function (a, b) {
@@ -383,106 +582,160 @@
       }
     );
 
-    for (const p of chosen) {
+
+    for (const pair of chosen) {
+
       text =
-        text.slice(0, p.start) +
-        "\\(" +
         text.slice(
-          p.start + 1,
-          p.end
+          0,
+          pair.start
         ) +
+
+        "\\(" +
+
+        text.slice(
+          pair.start + 1,
+          pair.end
+        ) +
+
         "\\)" +
-        text.slice(p.end + 1);
+
+        text.slice(
+          pair.end + 1
+        );
     }
+
 
     return text;
   }
 
 
-  /*
-   * Walk through the rendered article and repair text nodes.
-   */
-  function restoreLegacyMathDelimiters(root) {
-    if (!root) {
+
+  /* ------------------------------------------------------------
+   * Repair one complete paragraph/block
+   * ------------------------------------------------------------ */
+
+  function repairBlock(element) {
+
+    /*
+     * Don't interfere with already-generated MathJax.
+     */
+    if (
+      element.closest(
+        "pre, code, script, style, mjx-container"
+      )
+    ) {
       return;
     }
 
-    const walker =
-      document.createTreeWalker(
-        root,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: function (node) {
-            const parent =
-              node.parentElement;
 
-            if (!parent) {
-              return NodeFilter.FILTER_REJECT;
-            }
+    const state = {
+      unsafe: false,
+      recoveredUnderscore: false
+    };
 
-            /*
-             * Never alter code, scripts, styles, etc.
-             */
-            if (
-              parent.closest(
-                "script, style, textarea, pre, code, noscript, mjx-container"
-              )
-            ) {
-              return NodeFilter.FILTER_REJECT;
-            }
 
-            if (
-              !node.nodeValue ||
-              !node.nodeValue.trim()
-            ) {
-              return NodeFilter.FILTER_REJECT;
-            }
-
-            return NodeFilter.FILTER_ACCEPT;
-          }
-        }
+    let reconstructed =
+      reconstructText(
+        element,
+        state
       );
 
 
     /*
-     * Collect nodes first, then modify them.
+     * If there's genuine HTML formatting / a link etc.,
+     * leave it alone unless we specifically recovered a
+     * TeX-created underscore.
      */
-    const nodes = [];
-
-    let node;
-
-    while (
-      (node = walker.nextNode())
+    if (
+      state.unsafe &&
+      !state.recoveredUnderscore
     ) {
-      nodes.push(node);
+      return;
     }
 
 
-    for (const textNode of nodes) {
-      let text =
-        textNode.nodeValue;
+    const originalPlain =
+      element.textContent || "";
 
-      text =
-        restoreLegacyDisplay(text);
 
-      text =
-        restoreLegacyInline(text);
+    let repaired =
+      reconstructed;
 
-      if (
-        text !== textNode.nodeValue
-      ) {
-        textNode.nodeValue = text;
-      }
+
+    /*
+     * Important order:
+     *
+     * 1. recover underscores via DOM reconstruction
+     * 2. recover display delimiters
+     * 3. recover inline delimiters
+     */
+    repaired =
+      restoreLegacyDisplay(
+        repaired
+      );
+
+
+    repaired =
+      restoreLegacyInline(
+        repaired
+      );
+
+
+    /*
+     * Only flatten this element if an actual repair occurred.
+     */
+    if (
+      repaired !== originalPlain ||
+      state.recoveredUnderscore
+    ) {
+      element.textContent =
+        repaired;
     }
   }
 
 
-  /*
-   * MathJax configuration.
-   */
+
+  /* ------------------------------------------------------------
+   * Repair the article
+   * ------------------------------------------------------------ */
+
+  function restoreLegacyMath(root) {
+
+    if (!root) {
+      return;
+    }
+
+
+    /*
+     * Work on whole blocks rather than individual text nodes.
+     *
+     * This is the major change from v1:
+     * malformed TeX may have been split across <em> elements by
+     * kramdown, so individual text nodes don't contain enough
+     * information to reconstruct the formula.
+     */
+    const blocks =
+      root.querySelectorAll(
+        "p, li, td, th"
+      );
+
+
+    for (const block of blocks) {
+      repairBlock(block);
+    }
+  }
+
+
+
+  /* ------------------------------------------------------------
+   * MathJax configuration
+   * ------------------------------------------------------------ */
+
   window.MathJax = {
 
     tex: {
+
       inlineMath: [
         ["$", "$"],
         ["\\(", "\\)"]
@@ -498,6 +751,7 @@
 
 
     options: {
+
       skipHtmlTags: [
         "script",
         "noscript",
@@ -509,25 +763,27 @@
     },
 
 
-    /*
-     * Critical part:
-     *
-     * repair the HTML immediately before MathJax's initial typeset.
-     */
     startup: {
+
       pageReady: function () {
 
-        /*
-         * jekyll-theme-minimal places the Markdown content in <section>.
-         * Restricting the repair to that section avoids touching the
-         * sidebar / site metadata unnecessarily.
-         */
-        restoreLegacyMathDelimiters(
-          document.querySelector("section") ||
-          document.body
-        );
+        const root =
+          document.querySelector(
+            "section"
+          ) ||
+          document.body;
 
-        return MathJax.startup.defaultPageReady();
+
+        /*
+         * Repair malformed legacy TeX before MathJax scans the DOM.
+         */
+        restoreLegacyMath(root);
+
+
+        return (
+          MathJax.startup
+            .defaultPageReady()
+        );
       }
     }
   };
